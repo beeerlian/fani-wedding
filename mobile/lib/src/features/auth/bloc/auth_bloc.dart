@@ -6,7 +6,6 @@ import 'package:equatable/equatable.dart';
 import 'package:fani_wedding/src/network/data/common/http.dart';
 import 'package:fani_wedding/src/utils/fetch_state.dart';
 
-
 part 'auth_event.dart';
 part 'auth_state.dart';
 
@@ -42,12 +41,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // mapping response dari api
       response.when(
         success: (data) {
-          if (data['message'] == "Failed") {
-            emit(state.copyWith(
-                register: state.register.copyWith(
-                    status: FetchingStatus.failed,
-                    error:
-                        "Terjadi kesalahan, silahkan ulangi beberapa saat lagi")));
+          log("/log/ Response : $data");
+          if (data['status'] == false) {
+            throw NetworkExceptions.badRequest(reason: data["message"]);
           } else {
             emit(state.copyWith(
                 register:
@@ -60,10 +56,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
                   status: FetchingStatus.failed, error: error.message())));
         },
       );
-    } catch (e) {
+    } on NetworkExceptions catch (e) {
       emit(state.copyWith(
-          register: state.register
-              .copyWith(status: FetchingStatus.failed, error: e.toString())));
+          register: state.register.copyWith(
+              status: FetchingStatus.failed,
+              error: e.messageDescription().toString())));
     }
   }
 
@@ -90,8 +87,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // mapping response dari api
       response.when(
         success: (data) {
-          log("/log/ Failed : ${data['message'] == "Failed"}");
-          if (data['message'] == "Failed") {
+          if (data['status'] == false) {
             throw const NetworkExceptions.badRequest(
                 reason: "Email dan password salah");
           } else {
@@ -100,7 +96,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           }
         },
         failure: (error) {
-          log("/log/ ERROR : $error");
           emit(state.copyWith(
               login: state.login.copyWith(
                   status: FetchingStatus.failed, error: error.message())));

@@ -22,10 +22,10 @@ class LoginController extends Controller
 
     if ($customer && Hash::check($credentials['password'], $customer->password)) {
         // Login berhasil
-        return response()->json(['message'=>'Succesfull']);
+        return response()->json(['status'=>true,'message'=>'Succesfull']);
     } else {
         // Login gagal
-        return response()->json(['message'=>'Failed']);
+        return response()->json(['status'=>false,'message'=>'Failed']);
     }
     }
 
@@ -33,7 +33,7 @@ class LoginController extends Controller
     {
         Auth::logout();
 
-        return response()->json(['message' => 'Logout successful']);
+        return response()->json(['status'=>true,'message' => 'Logout successful']);
 
     }
 
@@ -44,14 +44,18 @@ class LoginController extends Controller
      */
     public function register(Request $request)
     {
-        
+        $bodyContent = $request->all();
+        $customer = Customer::where('email', $bodyContent["email"])->first();        
+        if(!is_null($customer)){
+            return response()->json(['status'=>false,'message'=>'Email already exist']);
+        }
         $customer=customer::create($request->all());
 
         $customer->password = Hash::make($request->password);
 
         $customer->save();
 
-        return response()->json(['message'=>'succesfull']);
+        return response()->json(['status'=>true,'message'=>'succesfull']);
     }
 
     /**
